@@ -408,8 +408,8 @@ extension SwiftLinkPreview {
 
         result = self.crawlMetaTags(sanitizedHtmlCode, result: result)
         
-        let otherResponse = self.crawlTitle(sanitizedHtmlCode, result: result)
-
+        var otherResponse = self.crawlTitle(sanitizedHtmlCode, result: result)
+        otherResponse = self.crawlDescription(otherResponse.htmlCode, result: otherResponse.result)
 
         return self.crawlImages(otherResponse.htmlCode, result: otherResponse.result)
     }
@@ -451,6 +451,22 @@ extension SwiftLinkPreview {
         }
 
     }
+    
+    // Crawl for description if needed
+    internal func crawlDescription(_ htmlCode: String, result: Response) -> (htmlCode: String, result: Response) {
+        var result = result
+        let description = result.description
+
+        if description == nil || description?.isEmpty ?? true {
+            let value: String = self.crawlCode(htmlCode, minimum: SwiftLinkPreview.decriptionMinimumRelevant)
+            if !value.isEmpty {
+                result.description = value.decoded.extendedTrim
+            }
+        }
+
+        return (htmlCode, result)
+    }
+
 
     // Extract base URL
     fileprivate func extractBaseUrl(_ url: String) -> String {
@@ -493,6 +509,7 @@ extension SwiftLinkPreview {
 
         let possibleTags: [String] = [
             Response.Key.title.rawValue,
+            Response.Key.description.rawValue,
             Response.Key.image.rawValue,
         ]
 
